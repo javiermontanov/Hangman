@@ -1,0 +1,346 @@
+﻿@page "/game"
+@inject HttpClient Http
+@inject NavigationManager UriHelper
+@inject LocalStorage Storage
+@inject IJSRuntime JS
+
+<table width="100%" border="0">
+  <tr>
+    <td width="50%" style="text-align: left">
+      <h3>Welcome, @activeUsername</h3>
+    </td>
+    <td width="50%" style="text-align: left">
+      <div @ref="gameStatusWon" style="visibility:hidden"><b style="color:#28a745">@ErrorMessages.YouWon</b></div>
+      <div @ref="gameStatusLose" style="visibility:hidden"><b style="color:red">@ErrorMessages.YouLose</b></div>
+    </td>
+  </tr>
+</table>
+
+<br />
+<table width="100%" border="0">
+  <tr>
+    <td width="60%">
+      <b>SELECT CATEGORY</b>&nbsp;&nbsp;
+      <select @ref="selectCategory" class="form-control" style="width:200px; display: inline;" @bind="CategorySelected">
+        @if (wordsCategories != null)
+        {
+          @foreach (var category in wordsCategories)
+          {
+            <option value="@category.Id">@category.Text</option>
+          }
+        }
+      </select>
+      &nbsp;&nbsp;&nbsp;&nbsp;
+      <button class="btn btn-info" @onclick="(() => StartGame())">PLAY</button>
+    </td>
+    <td width="40%" style="text-align: right">
+      <div @ref="divStats"></div>
+      &nbsp;&nbsp;
+    </td>
+  </tr>
+</table>
+<br />
+
+<div style="visibility:hidden" @ref="divGameContainer">
+  <table width="100%" border="0">
+    <tr>
+      <td width="40%">
+        <img src="@String.Format("images/{0}.jpg", currentImg)" />
+      </td>
+      <td width="60%">
+        <table width="100%">
+          <tr>
+            <td>
+              @for (int i = 0; i < selectedWord.Count; i++)
+              {
+                <button class="btn btn-outline-success">
+                  @if (enteredChars.Contains(selectedWord[i]))
+                  {
+                    @selectedWord[i];
+                  }
+                  else
+                  {
+                    currentBlankSpaces++;
+                    @GlobalConstants.EmptySpace
+                  }
+                </button>
+              }
+              <a style="visibility:hidden">@DetermineStatus();</a>
+            </td>
+          </tr>
+          <tr><td>&nbsp;</td></tr>
+          <tr>
+            <td>
+              <button class="btn btn-success" @onclick="(() => AddChar('A'))">A</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('B'))">B</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('C'))">C</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('D'))">D</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('E'))">E</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('F'))">F</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('G'))">G</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('H'))">H</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('I'))">&nbsp;I&nbsp;</button>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <button class="btn btn-success" @onclick="(() => AddChar('J'))">J</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('K'))">K</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('L'))">L</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('M'))">M</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('N'))">N</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('O'))">O</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('P'))">P</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('Q'))">Q</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('R'))">R</button>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <button class="btn btn-success" @onclick="(() => AddChar('S'))">S</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('T'))">T</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('U'))">U</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('V'))">V</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('W'))">W</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('X'))">X</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('Y'))">Y</button>
+              <button class="btn btn-success" @onclick="(() => AddChar('Z'))">Z</button>
+            </td>
+          </tr>
+          <tr>
+            <td><br /><br /><button class="btn btn-danger" @onclick="(() => AbandonGame())">QUIT GAME</button></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>
+@code {
+  ElementReference divGameContainer, divStats, selectCategory, gameStatusWon, gameStatusLose;
+  bool gameIsFinished = false;
+  int currentDifficulty = 0;
+  int currentImg = 0;
+  int? currentNumGood = 0;
+  int? currentNumBad = 0;
+  int? currentNumClicks = 0;
+  int? currentBlankSpaces = 0;
+  string currentCategory = "";
+  WinRecords lastDifficultySent = new WinRecords();
+  PlayersStatistics currentPlayerStatistics = new PlayersStatistics();
+  Words currentWord = new Words();
+  [Parameter] public string activeUsername { get; set; }
+  List<char> selectedWord = new List<char>(); //word selected from category
+  List<char> enteredChars = new List<char>(); //chars clicked
+  List<WinRecords> winRecord = new List<WinRecords>(); //words already found
+  WordsCategories[] wordsCategories { get; set; }
+
+  private string selectedItem { get; set; }
+  private string CategorySelected
+  {
+    get
+    {
+      return selectedItem;
+    }
+    set
+    {
+      ChangeEventArgs selectedEventArgs = new ChangeEventArgs();
+      selectedEventArgs.Value = value;
+      OnChangeSelected(selectedEventArgs);
+    }
+  }
+  private void OnChangeSelected(ChangeEventArgs e)
+  {
+    if (e.Value.ToString() != string.Empty)
+    {
+      selectedItem = e.Value.ToString();
+      currentDifficulty = 0;
+      lastDifficultySent.CategoryId = lastDifficultySent.Difficulty = 0;
+      winRecord.Clear();
+    }
+  }
+
+  async Task AddChar(char letter)
+  {
+    if (!gameIsFinished)
+    {
+      if (!enteredChars.Contains(letter))
+      {
+        enteredChars.Add(letter);
+
+        if (currentNumGood != null && currentNumBad != null && currentNumClicks != null && currentBlankSpaces != null)
+        {
+          currentBlankSpaces = 0;
+          if (selectedWord.Contains(letter)) currentNumGood++;
+          else currentNumBad++;
+          currentNumClicks++;
+
+          if (currentNumBad <= GlobalConstants.MaxNumberOfErrors)
+            currentImg = currentNumBad.Value;
+
+          if (currentNumBad == GlobalConstants.MaxNumberOfErrors)  //Finish Game
+          {
+            await YouLose();
+          }
+        }
+      }
+    }
+  }
+
+  async Task DetermineStatus()
+  {
+    if (currentBlankSpaces == 0 && enteredChars.Count > 0)
+    {
+      await YouWon();
+    }
+  }
+
+  async Task StartGame()
+  {
+    await ResetGame();
+  }
+
+  async Task UpdateStatisticsTexts(bool useDelay = false)
+  {
+    if (useDelay) await Task.Delay(1000);
+    currentPlayerStatistics = await Http.GetFromJsonAsync<PlayersStatistics>(GlobalConstants.ApiBaseUrl + $"playersstatistics/{activeUsername}/{currentCategory}");
+    await JS.InvokeVoidAsync("HangmanFunctions.LoadStats", divStats,
+      currentPlayerStatistics.Win, currentPlayerStatistics.Loss, currentPlayerStatistics.Abandon);
+  }
+
+  async Task LoadData()
+  {
+    //Get Current Category
+    int difficultToSend, categoryToSend = 0;
+    currentCategory = CategorySelected;
+
+    if (currentCategory == null)
+    {
+      currentCategory = await JS.InvokeAsync<string>("HangmanFunctions.GetSelectedElement", selectCategory);
+    }
+
+    //Get Stadistics
+    UpdateStatisticsTexts();
+
+    //Save Last Difficulty/Category Sent
+    if (lastDifficultySent.CategoryId == 0)
+    {
+      lastDifficultySent.Difficulty = currentDifficulty;
+      lastDifficultySent.CategoryId = int.Parse(currentCategory);
+    }
+
+    //Determine next difficulty
+    if (winRecord.Any(n => n.Difficulty == currentDifficulty
+      && n.CategoryId == int.Parse(currentCategory)))
+    {
+      difficultToSend = lastDifficultySent.Difficulty = currentDifficulty;
+      categoryToSend = lastDifficultySent.CategoryId = int.Parse(currentCategory);
+    }
+    else
+    {
+      difficultToSend = lastDifficultySent.Difficulty;
+      categoryToSend = lastDifficultySent.CategoryId;
+    }
+
+    //Get Word
+    var response = await Http.PutAsJsonAsync(GlobalConstants.ApiBaseUrl + "words",
+      new Words() { Difficulty = difficultToSend, CategoryId = categoryToSend });
+    currentWord = JsonConvert.DeserializeObject<Words>(response.Content.ReadAsStringAsync().Result);
+
+    if (currentWord != null && currentWord.Text != null && currentWord.Text.Length > 0)
+    {
+      selectedWord = currentWord.Text.Trim().ToUpper().ToCharArray().ToList();
+      currentDifficulty = currentWord.Difficulty; //Update Difficulty
+
+      //Show Container
+      await JS.InvokeVoidAsync("HangmanFunctions.ShowElement", divGameContainer);
+    }
+    else
+    { //Hide Container
+      await JS.InvokeVoidAsync("HangmanFunctions.HideElement", divGameContainer);
+      await JS.InvokeAsync<string>("alert", ErrorMessages.NoWords);
+    }
+  }
+
+  protected override async Task OnInitializedAsync()
+  {
+    lastDifficultySent.CategoryId = 0;
+    lastDifficultySent.Difficulty = 0;
+
+    activeUsername = Storage.GetItem("username");
+    if (activeUsername == "")
+    {
+      UriHelper.NavigateTo("/");
+    }
+
+    await LoadCategories();
+  }
+
+  async Task LoadCategories()
+  {
+    wordsCategories = await Http.GetFromJsonAsync<WordsCategories[]>(GlobalConstants.ApiBaseUrl + "wordscategories");
+  }
+
+  // Game States //
+  async Task YouLose()
+  {
+    gameIsFinished = true;
+    currentPlayerStatistics.Loss++;
+    UpdatePlayerStats();
+    await JS.InvokeVoidAsync("HangmanFunctions.ShowElement", gameStatusLose);
+    UpdateStatisticsTexts(true);
+  }
+
+  async Task YouWon()
+  {
+    gameIsFinished = true;
+    currentPlayerStatistics.Win++;
+    UpdatePlayerStats();
+    await JS.InvokeVoidAsync("HangmanFunctions.ShowElement", gameStatusWon);
+    UpdateStatisticsTexts(true);
+    winRecord.Add(new WinRecords()
+    { CategoryId = int.Parse(currentCategory), Difficulty = currentDifficulty });
+  }
+
+  async Task AbandonGame()
+  {
+    if(gameIsFinished)
+    {
+      if (await JS.InvokeAsync<bool>("confirm", ErrorMessages.AbandonGame))
+      {
+        currentPlayerStatistics.Abandon++;
+
+        UpdatePlayerStats();
+        await ResetGame();
+        currentDifficulty = 0;
+        UpdateStatisticsTexts(true);
+      }
+    }
+  }
+  // End Game States //
+
+  async Task UpdatePlayerStats()
+  {
+    currentPlayerStatistics.PlayerId = int.Parse(Storage.GetItem("userId"));
+    currentPlayerStatistics.CategoryId = int.Parse(currentCategory);
+
+    if (currentPlayerStatistics.Id > 0)
+      Http.PutAsJsonAsync(GlobalConstants.ApiBaseUrl + "playersstatistics", currentPlayerStatistics);
+    else
+      Http.PostAsJsonAsync(GlobalConstants.ApiBaseUrl + "playersstatistics", currentPlayerStatistics);
+  }
+
+  async Task ResetGame()
+  {
+    gameIsFinished = false;
+    currentImg = 0;
+    currentNumGood = 0;
+    currentNumBad = 0;
+    currentNumClicks = 0;
+    selectedWord.Clear();
+    enteredChars.Clear();
+    currentPlayerStatistics = new PlayersStatistics();
+    await JS.InvokeVoidAsync("HangmanFunctions.HideElement", gameStatusWon);
+    await JS.InvokeVoidAsync("HangmanFunctions.HideElement", gameStatusLose);
+    await LoadData();
+  }
+}

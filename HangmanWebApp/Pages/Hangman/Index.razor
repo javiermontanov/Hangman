@@ -1,0 +1,41 @@
+﻿@page "/"
+@inject HttpClient Http
+@inject NavigationManager UriHelper
+@inject LocalStorage Storage
+@inject IJSRuntime JS
+
+<h3>Welcome to HangMan!</h3>
+<br />
+<RegistrationLoginForm TextButton="LOGIN" OnValidSubmit="@LoginUser" Player="@Player"></RegistrationLoginForm>
+<div style="color:red"><br />@message</div>
+
+@code {
+  Players Player = new Players();
+  string message = String.Empty;
+
+  async Task LoginUser()
+  {
+    //Call to verify data
+    var response = await Http.PutAsJsonAsync(GlobalConstants.ApiBaseUrl + "players", Player);
+    Players cPlayer = JsonConvert.DeserializeObject<Players>(response.Content.ReadAsStringAsync().Result);
+
+    if (cPlayer.Id > 0)
+    {
+      //Set session
+      Storage.SetItem("userId", cPlayer.Id);
+      Storage.SetItem("username", cPlayer.Username);
+
+      //Redirect to game
+      UriHelper.NavigateTo("game");
+    }
+    else
+    {
+      message = ErrorMessages.InvalidUserNameOrPassword;
+    }
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await JS.InvokeAsync<string>("HangmanFunctions.loginFocusElement");
+  }
+}

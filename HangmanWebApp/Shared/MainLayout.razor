@@ -1,0 +1,28 @@
+﻿@inherits LayoutComponentBase
+@inject NavigationManager UriHelper
+@inject LocalStorage Storage
+
+<div class="sidebar">
+  <NavMenu />
+</div>
+
+<div class="main">
+  <div class="top-row px-4">
+    @if (Storage.GetItem("username") != "")
+    {
+      <a href="javascript:;" class="ml-md-auto" @onclick="(() => Logout())">Logout</a>
+    }
+  </div>
+
+  <div class="content px-4">
+    @Body
+  </div>
+</div>
+@code {
+  async Task Logout()
+  {
+    Storage.SetItem("userId", "");
+    Storage.SetItem("username", "");
+    UriHelper.NavigateTo("/");
+  }
+}

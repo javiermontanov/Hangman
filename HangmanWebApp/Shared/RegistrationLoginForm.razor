@@ -1,0 +1,26 @@
+﻿<EditForm Model="@Player" OnValidSubmit="@OnValidSubmit">
+  <div class="form-field">
+    <label>Username: </label>
+    <div>
+      <InputText @bind-Value="@Player.Username" id="usernameId"></InputText>
+      <ValidationMessage For="@(() => Player.Username)"></ValidationMessage>
+    </div>
+  </div><br />
+  <div class="form-field">
+    <label>Password: </label>
+    <div>
+      <InputText @bind-Value="@Player.Password" type="password"></InputText>
+      <ValidationMessage For="@(() => Player.Password)"></ValidationMessage>
+    </div>
+  </div>
+  <br />
+  <button type="submit" class="btn btn-success">@TextButton</button>
+  <DataAnnotationsValidator></DataAnnotationsValidator>
+  <ValidationSummary Model="@Player" />
+</EditForm>
+
+@code {
+  [Parameter] public Players Player { get; set; } = new Players();
+  [Parameter] public String TextButton { get; set; } = "LOGIN";
+  [Parameter] public EventCallback OnValidSubmit { get; set; }
+}

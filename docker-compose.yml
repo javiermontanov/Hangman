@@ -1,0 +1,22 @@
+version: "3"
+services:
+    sqlserver:
+        image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+        environment:
+          SA_PASSWORD: "RFv84-fxmt"
+          ACCEPT_EULA: "Y"
+          MSSQL_PID: Express
+        ports: 
+            - "1440:1433"
+    
+    webapi:
+        build: ./HangmanAPI
+        ports:
+            - "53141:80"
+    
+    client-nginx:
+        build: ./HangmanWebApp
+        environment:
+            BLAZOR_ENVIRONMENT: Development
+        ports:
+            - "5000:80"

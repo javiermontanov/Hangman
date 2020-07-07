@@ -1,0 +1,36 @@
+﻿@page "/register-player"
+@inject HttpClient Http
+@inject NavigationManager UriHelper
+@inject IJSRuntime JS
+
+<h3>Welcome to HangMan!</h3>
+<br />
+<h5><span style="color:red">Register</span> your player info to start with HangMan: </h5>
+<br />
+<RegistrationLoginForm TextButton="REGISTER" OnValidSubmit="@RegisterUser" Player="@Player"></RegistrationLoginForm>
+<div style="color:red"><br />@message</div>
+@code {
+  Players Player = new Players();
+  string message = "";
+
+  async Task RegisterUser()
+  {
+    //Call to server
+    var response = await Http.PostAsJsonAsync(GlobalConstants.ApiBaseUrl + "players", Player);
+
+    if (response.StatusCode.ToString() == "BadRequest")
+    {//User already exists
+      message = ErrorMessages.UserAlreadyExists;
+    }
+    else
+    {
+      //Redirect to game
+      UriHelper.NavigateTo("/");
+    }
+  }
+
+  protected override async Task OnAfterRenderAsync(bool firstRender)
+  {
+    await JS.InvokeAsync<string>("HangmanFunctions.loginFocusElement");
+  }
+}
