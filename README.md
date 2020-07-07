@@ -1,4 +1,4 @@
-# El juego del ahorcado usando WebAssembly con Blazor, ASP.NET Core 3.1, SQL Server y Docker
+# El juego del ahorcado usando WebAssembly con Blazor, ASP.NET Core 3.1, Entity Framework, SQL Server y Docker
 
 :: REQUERIMIENTOS ::
 •	La aplicación debe permitir registrar un jugador y autenticarlo para permitirle jugar. La aplicación debe permitir a varios jugadores jugar al mismo tiempo.
@@ -11,6 +11,15 @@
 
 :: USO ::
 Ejecutar el comando "docker-compose up" desde linea de comados
+
+:: COMO JUGAR ::
+Una vez que el jugador es registrado puede iniciar sesion y seleccionar alguna categoria para jugar
+cuando la categoria es seleccionado debe presionar el boton "PLAY" para iniciar adivinando la palabra correspondiente
+durante el juego puede presionar "QUIT GAME" para finalizar el juego actual y comenzar nuevamente con la palabra.
+Si el jugador no adivina la palabra en 6 ocaciones el dibujo del ahorcado llegará a su estado final.
+Una vez la palabra es adivinada aparecer la palabra "YOU WIN" que indica que puede nuevamente presionar "PLAY" para intentar la 
+siguiente palabra que tiene una dificultad mayor.En todas las opciones: Ganar, Perder o Abandonar el texto con el numero implicado es actualizado.
+Una vez que la lista de palabras es terminada se mostrara un mensaje que indica que no hay mas palabras disponibles en la categoria actual.
 
 
 Cualquier duda o comentario a: javiermontanov@gmail.com
