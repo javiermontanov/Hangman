@@ -11,8 +11,16 @@ using Cloudcrate.AspNetCore.Blazor.Browser.Storage;
 
 namespace HangmanWebApp
 {
+  /// <summary>
+  /// Program Class to configure the Web App
+  /// </summary>
   public class Program
   {
+    /// <summary>
+    /// Main method of the Program
+    /// </summary>
+    /// <param name="args">Current Arguments</param>
+    /// <returns>None</returns>
     public static async Task Main(string[] args)
     {
       var builder = WebAssemblyHostBuilder.CreateDefault(args);

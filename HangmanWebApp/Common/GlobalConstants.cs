@@ -1,5 +1,8 @@
 ﻿namespace HangmanWebApp.Common
 {
+  /// <summary>
+  /// Global Constants for the game
+  /// </summary>
   public class GlobalConstants
   {
     public const string ApiBaseUrl = "http://localhost:53141/";

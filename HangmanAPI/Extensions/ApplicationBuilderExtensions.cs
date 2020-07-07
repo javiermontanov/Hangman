@@ -8,8 +8,15 @@ using System.Linq;
 
 namespace HangmanAPI.Extensions
 {
+	/// <summary>
+	/// Application Builder Extensions
+	/// </summary>
 	public static class ApplicationBuilderExtensions
 	{
+		/// <summary>
+		/// Create Data Seeders for the game
+		/// </summary>
+		/// <param name="applicationBuilder">App Builder</param>
 		public static void UseDataSeeders(IApplicationBuilder applicationBuilder)
 		{
 			using (var serviceScope = applicationBuilder.ApplicationServices.CreateScope())
@@ -18,6 +25,10 @@ namespace HangmanAPI.Extensions
       }
 		}
 
+		/// <summary>
+		/// Seed Data to the DataBase
+		/// </summary>
+		/// <param name="context">Application Db Context</param>
 		public static void SeedData(ApplicationDbContext context)
     {
 			context.Database.Migrate();

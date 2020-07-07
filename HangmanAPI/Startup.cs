@@ -7,15 +7,29 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HangmanAPI
 {
+  /// <summary>
+  /// Startup Class
+  /// </summary>
   public class Startup
   {
+    /// <summary>
+    /// Default constructor
+    /// </summary>
+    /// <param name="configuration">IConfiguration interface</param>
     public Startup(IConfiguration configuration)
     {
       Configuration = configuration;
     }
 
+    /// <summary>
+    /// Current Configuration
+    /// </summary>
     public IConfiguration Configuration { get; }
 
+    /// <summary>
+    /// Configure all the services
+    /// </summary>
+    /// <param name="services">Service Collection</param>
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
@@ -40,8 +54,11 @@ namespace HangmanAPI
         .UseSqlServer($"Server={server},{port};Initial Catalog={database};User ID={user};Password={password};"));
       services.AddControllers();
     }
-
-    // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+    /// <summary>
+    /// This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+    /// </summary>
+    /// <param name="app">Application Builder Object</param>
+    /// <param name="env">Web Host Environment Object</param>
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
       /*if (env.IsDevelopment())

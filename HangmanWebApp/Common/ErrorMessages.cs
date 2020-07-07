@@ -1,5 +1,8 @@
 ﻿namespace HangmanWebApp.Common
 {
+  /// <summary>
+  /// Strings for Error Messages
+  /// </summary>
   public class ErrorMessages
   {
     public const string UserAlreadyExists = "Username already exists. Try Again.";
